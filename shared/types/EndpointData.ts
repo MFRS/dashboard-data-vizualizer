@@ -1,5 +1,6 @@
 export interface EndpointData {
   region: string;
-  status: "online" | "offline";
-  load?: number;
+  status: string;
+  load: number;
+  stats: Record<string, any>;
 }

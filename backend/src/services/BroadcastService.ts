@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { fetchData } from "../fetcher";
-import { EndpointData } from "../types";
+import { EndpointData } from "@shared/types/EndpointData";
 
 export class BroadcastService {
   private intervalId: ReturnType<typeof setInterval> | null = null;
