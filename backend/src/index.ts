@@ -20,7 +20,7 @@ const wss = new WebSocketServer({ server });
 wss.on("connection", (ws) => {
   console.log("🔌 Client connected via WebSocket");
 
-  // ✅ Send welcome message
+  //  Send welcome message
   ws.send(JSON.stringify({ type: "welcome", message: "Connected to server" }));
 
   ws.on("close", () => {
@@ -29,5 +29,5 @@ wss.on("connection", (ws) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+  console.log(` Server listening on port ${PORT}`);
 });

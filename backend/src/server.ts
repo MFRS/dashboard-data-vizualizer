@@ -1,23 +1,28 @@
-// src/server.ts
-import express from "express";
+
+import express, { Request, Response } from "express";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
+import { fetchData } from "./fetcher";
+import { EndpointData } from "./types";
+import { BroadcastService } from "./services/BroadcastService";
 
 const app = express();
-
-//  Single route for health check
-app.get("/health", (_, res) => {
+app.get("/health", (_: Request, res: Response) => {
   res.send("Server is up");
 });
 
-//  Create HTTP server
 const server = createServer(app);
 
-//  Attach WebSocket (you can expand this later)
+// 🧠 Attach WebSocket to the same HTTP server
 const wss = new WebSocketServer({ server });
 
-wss.on("connection", (ws) => {
-  ws.send(JSON.stringify({ message: "Connected to server" }));
-});
+// 🧠 Create a broadcaster and control it externally
+const broadcaster = new BroadcastService(wss);
 
-export { app, server };
+// 🔁 Optional: auto-start broadcasting (comment out in test env)
+if (process.env.NODE_ENV !== "test") {
+  broadcaster.start();
+}
+
+// ✅ Export for use in index.ts and tests
+export { app, server, broadcaster };
