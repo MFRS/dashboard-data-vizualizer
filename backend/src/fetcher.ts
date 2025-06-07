@@ -19,22 +19,29 @@ const endpoints = [
 export const fetchData = async (): Promise<EndpointData[]> => {
   const results: EndpointData[] = [];
 
-  for (const endpoint of endpoints) {
-    try {
-      const response = await axios.get(endpoint.url, { timeout: 5000 });
-      results.push({
-        region: endpoint.region,
-        status: "online",
-        stats: response.data,
-      });
-    } catch (error) {
-      results.push({
-        region: endpoint.region,
-        status: "offline",
-        stats: {},
-      });
-    }
-  }
+  await Promise.all(
+    endpoints.map(async ({ region, url }) => {
+      try {
+        const response = await axios.get(url, { timeout: 4000 });
+        results.push({
+          region,
+          status: "online",
+          stats: response.data,
+        });
+      } catch (error: unknown) {
+           if (error instanceof Error) {
+             console.error(` ${region} fetch failed:`, error.message);
+           } else {
+             console.error(` ${region} fetch failed with non-Error:`, error);
+           }
+        results.push({
+          region,
+          status: "offline",
+          stats: {},
+        });
+      }
+    })
+  );
 
   return results;
 };

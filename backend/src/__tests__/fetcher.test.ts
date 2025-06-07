@@ -1,34 +1,56 @@
-import { fetchData } from "../fetcher";
-import { app, server, broadcaster } from "../server";
-
-beforeAll((done) => {
-  server.listen(8081, () => {
-    broadcaster.start();
-    done();
-  });
-});
-
-
 jest.mock("axios", () => ({
-  get: jest.fn((url) =>
-    url.includes("us-east")
-      ? Promise.resolve({ data: { load: 0.3 } })
-      : Promise.reject("fail")
+  get: jest.fn(
+    (url: string) =>
+      url.includes("us-east")
+        ? Promise.resolve({ data: { load: 0.3 } }) // Simulate a success
+        : Promise.reject(new Error("Timeout")) // Simulate a failure
   ),
 }));
 
+import { fetchData } from "../fetcher";
+import { server, broadcaster } from "../server";
+import axios from "axios";
+
+
+
 describe("fetchData", () => {
-  it("returns status for all regions, marks failed ones offline", async () => {
+  jest.spyOn(console, "error").mockImplementation(() => {}); // suppresses console errors in tests
+  beforeAll((done) => {
+    server.listen(8081, () => {
+      broadcaster.start();
+      done();
+    });
+  });
+
+  afterAll((done) => {
+    broadcaster.stop();
+    server.close(done);
+  });
+
+  it("marks successful regions as online", async () => {
     const result = await fetchData();
     const usEast = result.find((r) => r.region === "us-east");
-    const others = result.filter((r) => r.region !== "us-east");
 
+    expect(usEast).toBeDefined();
     expect(usEast?.status).toBe("online");
-    expect(others.every((r) => r.status === "offline")).toBe(true);
+    expect(usEast?.stats).toHaveProperty("load");
   });
-});
 
-afterAll((done) => {
-  broadcaster.stop();
-  server.close(done); //  stop HTTP server
+  it("marks failed regions as offline", async () => {
+    const result = await fetchData();
+    const failedRegions = result.filter((r) => r.region !== "us-east");
+
+    expect(failedRegions.length).toBeGreaterThan(0);
+    expect(failedRegions.every((r) => r.status === "offline")).toBe(true);
+    expect(failedRegions.every((r) => typeof r.stats === "object")).toBe(true);
+  });
+
+  it("does not throw even if all endpoints fail", async () => {
+    (axios.get as jest.Mock).mockImplementation(() =>
+      Promise.reject(new Error("Network error"))
+    );
+
+    const result = await fetchData();
+    expect(result.every((r) => r.status === "offline")).toBe(true);
+  });
 });
