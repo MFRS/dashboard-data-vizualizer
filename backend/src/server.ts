@@ -13,16 +13,16 @@ app.get("/health", (_: Request, res: Response) => {
 
 const server = createServer(app);
 
-// 🧠 Attach WebSocket to the same HTTP server
+//  Attach WebSocket to the same HTTP server
 const wss = new WebSocketServer({ server });
 
-// 🧠 Create a broadcaster and control it externally
+//  Create a broadcaster and control it externally
 const broadcaster = new BroadcastService(wss);
 
-// 🔁 Optional: auto-start broadcasting (comment out in test env)
+//  Optional: auto-start broadcasting (comment out in test env)
 if (process.env.NODE_ENV !== "test") {
   broadcaster.start();
 }
 
-// ✅ Export for use in index.ts and tests
+//  Export for use in index.ts and tests
 export { app, server, broadcaster };

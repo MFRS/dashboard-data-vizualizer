@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import { fetchData } from "../fetcher";
 import { EndpointData } from "../types";
 
@@ -11,33 +11,39 @@ export class BroadcastService {
     private readonly interval: number = 10000
   ) {}
 
-  start() {
-    if (this.intervalId) return; // already running
+  public start(customInterval?: number) {
+    if (this.intervalId) return;
+
+    const effectiveInterval = customInterval ?? this.interval;
+
     this.intervalId = setInterval(async () => {
       try {
         const data = await fetchData();
         this.latestData = data;
         const message = JSON.stringify(data);
-
-        this.wss.clients.forEach((client) => {
-          if (client.readyState === client.OPEN) {
-            client.send(message);
-          }
-        });
+        this.broadcast(message);
       } catch (err) {
-        console.error("Broadcast error:", err);
+        console.error("📡 Broadcast error:", (err as Error).message ?? err);
       }
-    }, this.interval);
+    }, effectiveInterval);
   }
 
-  stop() {
+  public stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }
 
-  getLatestData(): EndpointData[] {
+  private broadcast(message: string) {
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+
+  public getLatestData(): EndpointData[] {
     return this.latestData;
   }
 }
