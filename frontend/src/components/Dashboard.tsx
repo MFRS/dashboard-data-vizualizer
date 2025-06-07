@@ -1,6 +1,5 @@
 import React from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
-import type { EndpointData } from "@shared/types/EndpointData";
 
 const Dashboard = () => {
   const { data, status } = useWebSocket("ws://localhost:3000"); // update if deployed
@@ -14,15 +13,15 @@ const Dashboard = () => {
       <h2 className="text-xl font-bold mb-4">DevOps Status Dashboard</h2>
       <p>Status: {status}</p>
       <ul className="mt-4 space-y-2">
-        {data?.map((regionData) => (
+        {data?.map((EndpointData) => (
           <li
-            key={regionData.region}
+            key={EndpointData.region}
             className={`p-4 border rounded ${
-              regionData.status === "online" ? "bg-green-100" : "bg-red-100"
+              EndpointData.status === "online" ? "bg-green-100" : "bg-red-100"
             }`}
           >
-            <strong>{regionData.region}</strong>: {regionData.status} | Load:{" "}
-            {regionData.load ?? "N/A"}
+            <strong>{EndpointData.region}</strong>: {EndpointData.status} | Load:{" "}
+            {EndpointData.load ?? "N/A"}
           </li>
         ))}
       </ul>

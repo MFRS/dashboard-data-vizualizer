@@ -1,8 +1,6 @@
 import express, { Request, Response } from "express";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { fetchData } from "./fetcher";
-import { EndpointData } from "@shared/types/EndpointData";
 
 import { BroadcastService } from "./services/BroadcastService";
 
@@ -14,7 +12,7 @@ app.get("/health", (_: Request, res: Response) => {
 const server = createServer(app);
 
 server.listen(3000, () => {
-  console.log("🚀 Server is listening on port 3000");
+  console.log(" Server is listening on port 3000");
 });
 
 // Attach WebSocket to the same HTTP server

@@ -1,3 +1,4 @@
+
 import { WebSocketServer, WebSocket } from "ws";
 import { fetchData } from "../fetcher";
 import { EndpointData } from "@shared/types/EndpointData";
@@ -8,7 +9,7 @@ export class BroadcastService {
 
   constructor(
     private readonly wss: WebSocketServer,
-    private readonly interval: number = 10000
+    private readonly interval: number = 2000
   ) {}
 
   public start(customInterval?: number) {
