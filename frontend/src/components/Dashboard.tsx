@@ -8,6 +8,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  ReferenceLine,
+  ReferenceArea,
   BarChart,
   Bar,
 } from "recharts";
@@ -117,7 +119,12 @@ const Dashboard: React.FC = () => {
 
                 {histRegion.cpuHistory?.length > 1 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium">CPU Trend (%)</p>
+                    <div className="flex justify-between text-sm font-medium">
+                      <span>CPU Trend (%)</span>
+                      <span className="text-right text-blue-600">
+                        {(stats.cpu_load * 100).toFixed(1)}%
+                      </span>
+                    </div>
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart
                         data={histRegion.cpuHistory.map((v, i) => ({
@@ -129,6 +136,17 @@ const Dashboard: React.FC = () => {
                         <YAxis domain={[0, 100]} hide />
                         <Tooltip
                           formatter={(v: number) => `${v.toFixed(1)}%`}
+                        />
+                        <ReferenceLine
+                          y={80}
+                          stroke="red"
+                          strokeDasharray="3 3"
+                        />
+                        <ReferenceArea
+                          y1={80}
+                          y2={100}
+                          fill="red"
+                          fillOpacity={0.1}
                         />
                         <Line
                           type="monotone"
@@ -143,7 +161,6 @@ const Dashboard: React.FC = () => {
                 )}
 
                 <div className="text-sm space-y-1 mb-2">
-                  <p>CPU: {(stats.cpu_load * 100).toFixed(1)}%</p>
                   <p>Load: {region.load ?? "N/A"}</p>
                   <p>Connections: {stats.active_connections}</p>
                   <p>Sessions: {region.stats.session ?? "N/A"}</p>
