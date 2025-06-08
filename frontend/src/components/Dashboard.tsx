@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import type { EndpointData } from "@shared/types/EndpointData";
 import {
@@ -14,14 +14,19 @@ import {
   Bar,
 } from "recharts";
 import RegionModal from "./RegionModal";
+import { toast } from "react-toastify";
 
 interface HistoricalData extends EndpointData {
   cpuHistory?: number[];
 }
 
+const CPU_ALERT_THRESHOLD = 0.85;
+const CONN_ALERT_THRESHOLD = 10000;
+
 const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
   const [selected, setSelected] = useState<EndpointData | null>(null);
+  const alerted = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (data) {
@@ -32,9 +37,42 @@ const Dashboard: React.FC = () => {
   }, [data]);
 
   useEffect(() => {
-    if (selected) localStorage.setItem("selectedRegion", selected.region);
-    else localStorage.removeItem("selectedRegion");
+    if (selected) {
+      localStorage.setItem("selectedRegion", selected.region);
+    } else {
+      localStorage.removeItem("selectedRegion");
+    }
   }, [selected]);
+
+  // Trigger alerts when thresholds are exceeded
+  useEffect(() => {
+    if (data) {
+      data.forEach((r) => {
+        const cpu = r.stats.server.cpu_load;
+        const conns = r.stats.server.active_connections;
+
+        if (
+          cpu > CPU_ALERT_THRESHOLD &&
+          !alerted.current.has(`${r.region}-cpu`)
+        ) {
+          toast.warning(`${r.region} CPU high: ${(cpu * 100).toFixed(1)}%`, {
+            toastId: `${r.region}-cpu`,
+          });
+          alerted.current.add(`${r.region}-cpu`);
+        }
+
+        if (
+          conns > CONN_ALERT_THRESHOLD &&
+          !alerted.current.has(`${r.region}-conn`)
+        ) {
+          toast.error(`${r.region} Connections high: ${conns}`, {
+            toastId: `${r.region}-conn`,
+          });
+          alerted.current.add(`${r.region}-conn`);
+        }
+      });
+    }
+  }, [data]);
 
   if (!data) return <p className="p-4">Waiting for data...</p>;
 
@@ -68,7 +106,6 @@ const Dashboard: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
         <div className="bg-white rounded-lg p-4 shadow">
           <p className="font-medium mb-1">Total Active Connections</p>
           <p className="text-2xl font-bold text-orange-600 mb-2">
@@ -85,7 +122,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Regions */}
+      {/* Region Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...data]
           .sort((a, b) => a.region.localeCompare(b.region))
@@ -116,14 +153,11 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-500 mb-2">
                   Version: {region.version}
                 </p>
-
                 {histRegion.cpuHistory?.length > 1 && (
                   <div className="mb-4">
                     <div className="flex justify-between text-sm font-medium">
                       <span>CPU Trend (%)</span>
-                      <span className="text-right text-blue-600">
-                        {(stats.cpu_load * 100).toFixed(1)}%
-                      </span>
+                      <span>{(stats.cpu_load * 100).toFixed(1)}%</span>
                     </div>
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart
@@ -159,7 +193,6 @@ const Dashboard: React.FC = () => {
                     </ResponsiveContainer>
                   </div>
                 )}
-
                 <div className="text-sm space-y-1 mb-2">
                   <p>Load: {region.load ?? "N/A"}</p>
                   <p>Connections: {stats.active_connections}</p>
