@@ -1,56 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { EndpointData } from "../types/EndpointData";
 
-type Worker = EndpointData["stats"]["server"]["workers"][0][1];
-
-type BlockedKey = [string, number, string]; // [key, count, timestamp]
+type SortConfig = { key: "count" | "time"; direction: "asc" | "desc" };
 
 const WorkerPools: React.FC<{
   workers: EndpointData["stats"]["server"]["workers"];
 }> = ({ workers }) => {
   const [search, setSearch] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
-    key: "count" | "time";
-    direction: "asc" | "desc";
-  } | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+
+  // Load persisted sort config
+  useEffect(() => {
+    const saved = localStorage.getItem("workerSort");
+    if (saved) {
+      setSortConfig(JSON.parse(saved));
+    }
+  }, []);
+
+  // Persist sort config
+  useEffect(() => {
+    if (sortConfig) {
+      localStorage.setItem("workerSort", JSON.stringify(sortConfig));
+    } else {
+      localStorage.removeItem("workerSort");
+    }
+  }, [sortConfig]);
 
   const filteredWorkers = workers.filter(([name, w]) => {
-    const nameMatch = name.toLowerCase().includes(search.toLowerCase());
-    const blockedMatch = w.recently_blocked_keys.some(([k]) =>
+    const matchesName = name.toLowerCase().includes(search.toLowerCase());
+    const matchesKey = w.recently_blocked_keys.some(([k]) =>
       k.toLowerCase().includes(search.toLowerCase())
     );
-    return nameMatch || blockedMatch;
+    return matchesName || matchesKey;
   });
 
-  const sortedWorkers = filteredWorkers.map(([name, w]) => {
+  const sorted = filteredWorkers.map(([name, w]) => {
     const keys = [...w.recently_blocked_keys].filter(([k]) =>
       k.toLowerCase().includes(search.toLowerCase())
     );
-
     if (sortConfig) {
       keys.sort((a, b) => {
-        const [_, countA, timeA] = a;
-        const [__, countB, timeB] = b;
+        const [, ca, ta] = a;
+        const [, cb, tb] = b;
         if (sortConfig.key === "count") {
-          return sortConfig.direction === "asc"
-            ? countA - countB
-            : countB - countA;
+          return sortConfig.direction === "asc" ? ca - cb : cb - ca;
         } else {
-          const dateA = new Date(timeA).getTime();
-          const dateB = new Date(timeB).getTime();
-          return sortConfig.direction === "asc" ? dateA - dateB : dateB - dateA;
+          const da = +new Date(ta),
+            db = +new Date(tb);
+          return sortConfig.direction === "asc" ? da - db : db - da;
         }
       });
     }
-
-    return { name, w, keys };
+    return { name, stats: w, keys };
   });
 
-  const requestSort = (key: "count" | "time") => {
-    let direction: "asc" | "desc" = "asc";
-    if (sortConfig?.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
+  const requestSort = (key: SortConfig["key"]) => {
+    const direction =
+      sortConfig?.key === key && sortConfig.direction === "asc"
+        ? "desc"
+        : "asc";
     setSortConfig({ key, direction });
   };
 
@@ -64,7 +72,7 @@ const WorkerPools: React.FC<{
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {sortedWorkers.map(({ name, w, keys }) => (
+      {sorted.map(({ name, stats: w, keys }) => (
         <div key={name} className="mb-3 bg-white rounded shadow-sm p-2">
           <p className="font-medium">{name}</p>
           <div className="text-xs grid grid-cols-2 gap-2 mb-1">
@@ -74,21 +82,17 @@ const WorkerPools: React.FC<{
             <p>Wait Time: {w.wait_time}ms</p>
             <p>Return Time: {w.time_to_return}ms</p>
           </div>
-
           {w.recently_blocked_keys.length > 0 && (
             <details className="col-span-2">
               <summary>
-                Blocked Keys ({keys.length}) – sorted by{" "}
+                Blocked Keys ({keys.length}) – Sort by{" "}
                 <button
                   className="underline"
                   onClick={() => requestSort("count")}
                 >
                   Count{" "}
-                  {sortConfig?.key === "count"
-                    ? sortConfig.direction === "asc"
-                      ? "↑"
-                      : "↓"
-                    : ""}
+                  {sortConfig?.key === "count" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </button>{" "}
                 |{" "}
                 <button
@@ -96,14 +100,10 @@ const WorkerPools: React.FC<{
                   onClick={() => requestSort("time")}
                 >
                   Time{" "}
-                  {sortConfig?.key === "time"
-                    ? sortConfig.direction === "asc"
-                      ? "↑"
-                      : "↓"
-                    : ""}
+                  {sortConfig?.key === "time" &&
+                    (sortConfig.direction === "asc" ? "↑" : "↓")}
                 </button>
               </summary>
-
               <table className="w-full text-xs mt-2 border-separate border-spacing-0.5">
                 <thead>
                   <tr>
@@ -111,21 +111,15 @@ const WorkerPools: React.FC<{
                     <th className="border p-1 text-right">
                       <button onClick={() => requestSort("count")}>
                         Count{" "}
-                        {sortConfig?.key === "count"
-                          ? sortConfig.direction === "asc"
-                            ? "↑"
-                            : "↓"
-                          : ""}
+                        {sortConfig?.key === "count" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
                       </button>
                     </th>
                     <th className="border p-1 text-right">
                       <button onClick={() => requestSort("time")}>
                         Time{" "}
-                        {sortConfig?.key === "time"
-                          ? sortConfig.direction === "asc"
-                            ? "↑"
-                            : "↓"
-                          : ""}
+                        {sortConfig?.key === "time" &&
+                          (sortConfig.direction === "asc" ? "↑" : "↓")}
                       </button>
                     </th>
                   </tr>
@@ -147,7 +141,7 @@ const WorkerPools: React.FC<{
         </div>
       ))}
 
-      {sortedWorkers.length === 0 && (
+      {sorted.length === 0 && (
         <p className="text-sm text-gray-500 mt-4">No matches found.</p>
       )}
     </div>
