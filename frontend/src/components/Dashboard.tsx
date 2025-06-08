@@ -63,6 +63,54 @@ const Dashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  // 🎯 New CSV download function
+  const downloadCSV = () => {
+    if (!history.length) return;
+
+    const rows: string[] = [];
+    const header = [
+      "timestamp",
+      "region",
+      "status",
+      "cpu_load",
+      "active_connections",
+      "servers_count",
+      "sessions",
+      "wait_time",
+      "timers",
+    ].join(",");
+    rows.push(header);
+
+    history.forEach((snapshot, idx) => {
+      const ts = new Date(
+        Date.now() - (history.length - idx) * 1000
+      ).toISOString();
+      snapshot.forEach((r) => {
+        const stats = r.stats.server;
+        const fields = [
+          ts,
+          r.region,
+          r.status,
+          stats.cpu_load.toString(),
+          stats.active_connections.toString(),
+          r.stats.servers_count.toString(),
+          r.stats.session.toString(),
+          stats.wait_time.toString(),
+          stats.timers.toString(),
+        ];
+        rows.push(fields.join(","));
+      });
+    });
+
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `stats-history-${new Date().toISOString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     if (data) {
       data.forEach((r) => {
@@ -105,12 +153,20 @@ const Dashboard: React.FC = () => {
     <div className="p-6 space-y-6">
       <h2 className="text-2xl font-bold flex justify-between items-center">
         DevOps Dashboard
-        <button
-          onClick={downloadJSON}
-          className="ml-4 px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          ⬇ Download JSON
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={downloadJSON}
+            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            ⬇ JSON
+          </button>
+          <button
+            onClick={downloadCSV}
+            className="px-4 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            ⬇ CSV
+          </button>
+        </div>
       </h2>
 
       <div className="text-gray-600 mb-4">
