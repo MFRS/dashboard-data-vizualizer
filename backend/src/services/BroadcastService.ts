@@ -1,7 +1,7 @@
 // backend/src/services/BroadcastService.ts
 import { WebSocketServer, WebSocket } from "ws";
 import { fetchData } from "../fetcher";
-import { EndpointData } from "shared/types/EndpointData";
+import { EndpointData } from "../shared/types/EndpointData";
 
 export class BroadcastService {
   private intervalId: ReturnType<typeof setInterval> | null = null;
