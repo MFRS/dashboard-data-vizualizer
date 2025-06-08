@@ -14,12 +14,12 @@ export class BroadcastService {
 
   public start(customInterval?: number) {
     if (this.intervalId) {
-      console.warn("⚠️ Broadcast already started; skipping.");
+      console.warn(" Broadcast already started; skipping.");
       return;
     }
     const effectiveInterval = customInterval ?? this.interval;
 
-    console.log(`🚀 Starting broadcast every ${effectiveInterval}ms`);
+    console.log(` Starting broadcast every ${effectiveInterval}ms`);
     this.intervalId = setInterval(async () => {
       try {
         const data = await fetchData();
@@ -35,14 +35,14 @@ export class BroadcastService {
   public stop() {
     if (this.intervalId) {
       clearInterval(this.intervalId);
-      console.log("🛑 Broadcast stopped.");
+      console.log(" Broadcast stopped.");
       this.intervalId = null;
     }
   }
 
   private broadcast(message: string) {
     const clientCount = this.wss.clients.size;
-    console.log(`📣 Broadcasting to ${clientCount} client(s).`);
+    console.log(` Broadcasting to ${clientCount} client(s).`);
     this.wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);

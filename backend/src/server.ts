@@ -29,7 +29,7 @@ wss.on("connection", (ws) => {
   ws.send(JSON.stringify(broadcaster.getLatestData()));
 
   ws.on("close", () => console.log("🔌 Client disconnected"));
-  ws.on("error", (error) => console.error("🛑 WebSocket error:", error));
+  ws.on("error", (error) => console.error(" WebSocket error:", error));
 });
 
 // Kick off a single broadcast loop when the server starts
