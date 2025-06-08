@@ -9,6 +9,7 @@ const express_1 = __importDefault(require("express"));
 const http_1 = require("http");
 const ws_1 = require("ws");
 const BroadcastService_1 = require("./services/BroadcastService");
+require("module-alias/register");
 const PORT = Number(process.env.PORT) || 3000;
 const app = (0, express_1.default)();
 exports.app = app;

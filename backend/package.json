@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build" : "tsc",
+    "build": "tsc",
     "start": "ts-node src/server.ts",
     "test": "jest",
     "dev": "nodemon --watch src --exec ts-node src/server.ts"
@@ -15,11 +15,16 @@
   "dependencies": {
     "axios": "^1.9.0",
     "express": "^5.1.0",
+    "module-alias": "^2.2.3",
     "ws": "^8.18.2"
+  },
+  "_moduleAliases": {
+    "@shared": "dist/shared"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",
     "@types/jest": "^29.5.14",
+    "@types/module-alias": "^2.0.4",
     "@types/node": "^22.15.30",
     "@types/supertest": "^6.0.3",
     "@types/ws": "^8.18.1",

@@ -1,4 +1,11 @@
 {
+
+  "scripts": {
+    "build": "tsc",
+    "build:shared": "tsc -p shared/tsconfig.json",
+    "start": "ts-node src/server.ts"
+  
+  },
   "devDependencies": {
     "@types/path-browserify": "^1.0.3"
   }

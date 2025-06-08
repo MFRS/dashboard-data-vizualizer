@@ -1,6 +1,6 @@
-
 import axios from "axios";
-import { EndpointData } from "@shared/types/EndpointData";
+import { EndpointData } from "../shared/types/EndpointData";
+
 
 const endpoints = [
   { region: "us-east", url: "https://data--us-east.upscope.io/status?stats=1" },

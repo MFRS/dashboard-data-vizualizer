@@ -3,6 +3,9 @@ import express, { Request, Response } from "express";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { BroadcastService } from "./services/BroadcastService";
+import "module-alias/register";
+
+
 
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
