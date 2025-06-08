@@ -1,34 +1,20 @@
-# Build stage
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install dependencies first (caching)
+# Install dependencies first for caching
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
-# Copy source code
+# Install TypeScript globally
+RUN npm install -g typescript@5.8.3
+
+# Copy source and build
 COPY . .
-
-# Build application
 RUN npm run build
-
-# Production stage
-FROM node:18-alpine AS production
-
-WORKDIR /app
-
-# Copy built assets and production dependencies
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-RUN npm ci --only=production
 
 # Set environment
 ENV NODE_ENV=production
-
-# Expose port 
 EXPOSE 3000
 
-# Start command
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]

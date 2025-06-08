@@ -1,9 +1,12 @@
 {
+  "dependencies": {
+    "typescript": "^5.8.3"
+  },
 
   "scripts": {
     "build": "tsc",
     "build:shared": "tsc -p shared/tsconfig.json",
-    "start": "ts-node src/server.ts"
+    "start": "node dist/index.js"
   
   },
   "devDependencies": {

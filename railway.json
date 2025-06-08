@@ -1,20 +1,12 @@
 {
     "build": {
         "builder": "NIXPACKS",
-        "nixpacksConfigPath": "backend/nixpacks.toml"
+        "buildCommand": "npm install && npm run build"
     },
     "deploy": {
-        "startCommand": "node dist/server.js"
-    },
-    "services": [
-        {
-            "name": "api",
-            "basePath": "./backend"
-        }
-    ],
-    "plugins": {
-        "node": {
-            "version": "18"
-        }
+        "startCommand": "npm start",
+        "healthcheckPath": "/",
+        "healthcheckTimeout": 100,
+        "restartPolicyType": "ON_FAILURE"
     }
 }
