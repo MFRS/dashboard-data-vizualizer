@@ -1,10 +1,11 @@
 [phases.setup]
-nixpkgsArchive = "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz"
+nixPkgs = ["nodejs", "yarn"]
+
+[phases.install]
+cmds = ["cd backend && yarn install --frozen-lockfile"]
 
 [phases.build]
-cmd = "npm run build"
-working_directory = "backend"
+cmds = ["cd backend && yarn build"]
 
 [start]
 cmd = "node dist/server.js"
-working_directory = "backend"

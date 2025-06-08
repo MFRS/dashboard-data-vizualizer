@@ -1,7 +1,8 @@
 {
     "build": {
         "builder": "NIXPACKS",
-        "nixpacksConfigPath": "nixpacks.toml"
+        "nixpacksConfigPath": "nixpacks.toml",
+        "buildPath": "backend"
     },
     "deploy": {
         "startCommand": "node dist/server.js"
