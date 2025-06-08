@@ -15,6 +15,9 @@ const Dashboard = () => {
 
   if (!data) return <p className="p-4">Waiting for data...</p>;
 
+  const CPU_ALERT_THRESHOLD = 0.8;
+  const WAIT_ALERT_THRESHOLD = 500;
+
   return (
     <div className="p-6 space-y-6">
       <h2 className="text-2xl font-bold">DevOps Dashboard</h2>
@@ -27,17 +30,19 @@ const Dashboard = () => {
           .sort((a, b) => a.region.localeCompare(b.region))
           .map((region: EndpointData) => {
             const stats = region.stats.server;
+            const cpuAlert = stats.cpu_load >= CPU_ALERT_THRESHOLD;
+            const waitAlert = stats.wait_time >= WAIT_ALERT_THRESHOLD;
             return (
               <div
                 key={region.region}
-                className={`bg-white p-4 rounded-lg shadow ${
+                className={`bg-white p-4 rounded-lg shadow border-2 ${
                   region.status === "online"
                     ? "border-green-300"
                     : "border-red-300"
-                } border-2`}
+                }`}
               >
-                <h3 className="text-lg font-semibold flex justify-between">
-                  {region.region}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">{region.region}</h3>
                   <span
                     className={`px-2 py-0.5 text-sm rounded ${
                       region.status === "online" ? "bg-green-200" : "bg-red-200"
@@ -45,14 +50,28 @@ const Dashboard = () => {
                   >
                     {region.status}
                   </span>
-                </h3>
+                </div>
                 <p className="text-sm text-gray-500 mb-2">
                   Version: {region.version}
                 </p>
 
+                {/* Alert badges */}
+                <div className="flex gap-2 mb-3">
+                  {cpuAlert && (
+                    <span className="bg-yellow-200 text-yellow-800 px-2 rounded text-xs">
+                      High CPU
+                    </span>
+                  )}
+                  {waitAlert && (
+                    <span className="bg-yellow-200 text-yellow-800 px-2 rounded text-xs">
+                      High Wait
+                    </span>
+                  )}
+                </div>
+
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm">CPU Load</p>
+                    <p className="text-sm font-medium">CPU Load</p>
                     <ResponsiveContainer width="100%" height={50}>
                       <BarChart
                         data={[{ name: "CPU", load: stats.cpu_load * 100 }]}
@@ -62,13 +81,16 @@ const Dashboard = () => {
                         <Tooltip
                           formatter={(value: number) => `${value.toFixed(1)}%`}
                         />
-                        <Bar dataKey="load" fill="#3b82f6" />
+                        <Bar
+                          dataKey="load"
+                          fill={cpuAlert ? "#d97706" : "#3b82f6"}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
 
                   <div>
-                    <p className="text-sm">Active Connections</p>
+                    <p className="text-sm font-medium">Active Connections</p>
                     <ResponsiveContainer width="100%" height={50}>
                       <BarChart
                         data={[
