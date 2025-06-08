@@ -1,5 +1,10 @@
-[phases.build]
-cmds = ["npm install", "cd backend && npm run build"]
+[phases.setup]
+nixpkgsArchive = "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz"
 
-[phases.start]
-cmd = "cd backend && npm start"
+[phases.build]
+cmd = "npm run build"
+working_directory = "backend"
+
+[start]
+cmd = "node dist/server.js"
+working_directory = "backend"
