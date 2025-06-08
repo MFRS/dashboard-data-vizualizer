@@ -11,6 +11,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@tailwindcss/vite": "^4.1.8",
     "path-browserify": "^1.0.1",
     "react": "^19.1.0",

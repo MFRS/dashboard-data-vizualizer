@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import type { EndpointData } from "@shared/types/EndpointData";
 import {
@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import RegionModal from "./RegionModal";
 
 interface HistoricalData extends EndpointData {
   cpuHistory?: number[];
@@ -16,10 +17,11 @@ interface HistoricalData extends EndpointData {
 
 const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
+  const [selected, setSelected] = useState<EndpointData | null>(null);
 
-  if (!data) {
-    return <p className="p-4">Waiting for data...</p>;
-  }
+  if (!data) return <p className="p-4">Waiting for data...</p>;
+
+  console.log("Currently selected:", selected?.region);
 
   return (
     <div className="p-6 space-y-6">
@@ -38,7 +40,11 @@ const Dashboard: React.FC = () => {
             return (
               <div
                 key={region.region}
-                className={`bg-white p-4 rounded-lg shadow border-2 ${
+                onClick={() => {
+                  console.log("Clicked region:", region.region);
+                  setSelected(region);
+                }}
+                className={`bg-white p-4 rounded-lg shadow border-2 cursor-pointer hover:shadow-lg transition ${
                   region.status === "online"
                     ? "border-green-300"
                     : "border-red-300"
@@ -58,8 +64,7 @@ const Dashboard: React.FC = () => {
                   Version: {region.version}
                 </p>
 
-                {/* CPU sparkline */}
-                {histRegion.cpuHistory && histRegion.cpuHistory.length > 1 && (
+                {histRegion.cpuHistory?.length > 1 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium">CPU Trend (%)</p>
                     <ResponsiveContainer width="100%" height={50}>
@@ -86,7 +91,6 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {/* Stats and other info */}
                 <div className="text-sm space-y-1 mb-2">
                   <p>Current CPU: {(stats.cpu_load * 100).toFixed(1)}%</p>
                   <p>Load: {region.load ?? "N/A"}</p>
@@ -100,6 +104,10 @@ const Dashboard: React.FC = () => {
             );
           })}
       </div>
+
+      {selected && (
+        <RegionModal region={selected} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 };

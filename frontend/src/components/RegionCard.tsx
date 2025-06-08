@@ -8,7 +8,7 @@ const RegionCard: React.FC<{ data: EndpointData }> = ({ data }) => {
   const online = data.status === "online";
   return (
     <div
-      className={`p-4 border rounded-lg space-y-2 ${
+      className={`p-4 border rounded-lg space-y-2 cursor-pointer hover:shadow-lg transition ${
         online ? "bg-green-50" : "bg-red-50"
       }`}
     >
