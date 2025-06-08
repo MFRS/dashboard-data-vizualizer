@@ -1,12 +1,17 @@
 {
     "build": {
         "builder": "NIXPACKS",
-        "nixpacksConfigPath": "nixpacks.toml",
-        "buildPath": "backend"
+        "nixpacksConfigPath": "backend/nixpacks.toml"
     },
     "deploy": {
-        "startCommand": "node dist/server.js"
+        "startCommand": "node backend/dist/server.js"
     },
+    "services": [
+        {
+            "name": "api",
+            "basePath": "./backend"
+        }
+    ],
     "plugins": {
         "node": {
             "version": "18"
