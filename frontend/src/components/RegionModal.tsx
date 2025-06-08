@@ -1,5 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 import type { EndpointData } from "@shared/types/EndpointData";
+import ServiceHealth from "./ServiceHealth";
+import ServerStats from "./ServerStats";
+import WorkerPools from "./WorkerPools";
 
 interface RegionModalProps {
   region: EndpointData;
@@ -7,11 +11,11 @@ interface RegionModalProps {
 }
 
 const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
-  const stats = region.stats?.server;
-  const roles = Array.isArray(region.roles) ? region.roles : [];
+  const stats = region.stats.server;
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("Rendering modal for region:", region);
+    console.log("Rendering modal for:", region.region);
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -19,7 +23,11 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [region, onClose]);
 
-  return (
+  const toggle = (name: string) => {
+    setExpanded((prev) => (prev === name ? null : name));
+  };
+
+  return ReactDOM.createPortal(
     <div className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl relative">
         <button
@@ -29,60 +37,66 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
         >
           &times;
         </button>
-
         <h2 className="text-xl font-bold mb-2">{region.region} Details</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Version: {region.version} | Roles: {roles.join(", ")}
+          Version: {region.version} | Roles: {region.roles?.join(", ") || "—"}
         </p>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p>
-              <strong>Status:</strong> {region.status}
-            </p>
-            <p>
-              <strong>CPU Load:</strong>{" "}
-              {(stats?.cpu_load * 100).toFixed(1) || "N/A"}%
-            </p>
-            <p>
-              <strong>Connections:</strong> {stats?.active_connections ?? "N/A"}
-            </p>
-            <p>
-              <strong>Wait Time:</strong> {stats?.wait_time} ms
-            </p>
-          </div>
-          <div>
-            <p>
-              <strong>Sessions:</strong> {region.stats?.session ?? "N/A"}
-            </p>
-            <p>
-              <strong>Servers Count:</strong>{" "}
-              {region.stats?.servers_count ?? "N/A"}
-            </p>
-            <p>
-              <strong>Timers:</strong> {stats?.timers ?? "N/A"}
-            </p>
-            <p>
-              <strong>Load:</strong> {region.load ?? "N/A"}
-            </p>
-          </div>
-        </div>
+        <ServiceHealth services={region.services} />
+        <ServerStats stats={region.stats} />
 
-        <div className="mt-4">
-          <h3 className="font-semibold mb-1">Services</h3>
-          <ul className="list-disc list-inside text-sm">
-            {Object.entries(region.services ?? {}).map(([key, value]) => (
-              <li
-                key={key}
-                className={value ? "text-green-700" : "text-red-600"}
-              >
-                {key}: {value ? "Available" : "Down"}
-              </li>
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2">Worker Pools</h3>
+          <div className="divide-y divide-gray-200">
+            {stats.workers.map(([name, w]) => (
+              <div key={name} className="py-2">
+                <button
+                  className="w-full flex justify-between items-center text-left"
+                  onClick={() => toggle(name)}
+                >
+                  <span className="font-medium">{name}</span>
+                  <span className="text-xs text-gray-500">
+                    {expanded === name ? "▼" : "▶"}
+                  </span>
+                </button>
+
+                <div className="ml-4 mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <p>Workers: {w.workers}</p>
+                  <p>Waiting: {w.waiting}</p>
+                  <p>Idle: {w.idle}</p>
+                  <p>Wait Time: {w.wait_time}ms</p>
+                  <p>Return Time: {w.time_to_return}ms</p>
+                </div>
+
+                {expanded === name && w.recently_blocked_keys.length > 0 && (
+                  <table className="w-full text-xs mt-2 border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="border p-1 text-left">Key</th>
+                        <th className="border p-1 text-right">Count</th>
+                        <th className="border p-1 text-right">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {w.recently_blocked_keys.map(([k, c, ts], idx) => (
+                        <tr key={idx}>
+                          <td className="border p-1">{k}</td>
+                          <td className="border p-1 text-right">{c}</td>
+                          <td className="border p-1 text-right">
+                            {new Date(ts).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
