@@ -7,7 +7,7 @@
     "rootDir": ".", // 👈 Allows src and shared
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["shared/*"]
     },
     "esModuleInterop": true,
     "strict": true,
