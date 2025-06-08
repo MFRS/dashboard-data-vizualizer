@@ -4,7 +4,7 @@
         "nixpacksConfigPath": "backend/nixpacks.toml"
     },
     "deploy": {
-        "startCommand": "node backend/dist/server.js"
+        "startCommand": "node dist/server.js"
     },
     "services": [
         {

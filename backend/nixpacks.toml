@@ -7,6 +7,5 @@ cmds = ["cd backend && yarn install --frozen-lockfile"]
 [phases.build]
 cmd = "cd backend && yarn run build:shared && yarn install --frozen-lockfile && yarn run build"
 
-
 [start]
 cmd = "node dist/server.js"
