@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import type { EndpointData } from "@shared/types/EndpointData";
 import WorkerPools from "./WorkerPools";
+import BlockedKeysTable from "./BlockedKeysTable"; // 👈 NEW import
 import {
   ResponsiveContainer,
   LineChart,
@@ -34,12 +35,19 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
+
+  const blockedKeys = stats.workers
+    .flatMap(([, w]) => w.recently_blocked_keys)
+    .map(([key, count, time]) => ({
+      key,
+      count,
+      time: new Date(time).toISOString(),
+    }));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
@@ -59,7 +67,6 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
           Version: {region.version} | Roles: {region.roles?.join(", ") ?? "—"}
         </p>
 
-        {/* CPU Trend Chart */}
         <div className="mt-4">
           <p className="font-medium mb-1">
             CPU Trend: {(stats.cpu_load * 100).toFixed(1)}%
@@ -89,7 +96,6 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
           </ResponsiveContainer>
         </div>
 
-        {/* Basic Stats */}
         <div className="grid grid-cols-2 gap-4 text-sm mt-4">
           <div>
             <p>
@@ -121,7 +127,6 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
           </div>
         </div>
 
-        {/* Services */}
         <div className="mt-4">
           <h3 className="font-semibold mb-1">Services</h3>
           <ul className="list-disc list-inside text-sm">
@@ -136,11 +141,16 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
           </ul>
         </div>
 
-        {/* Worker Pools */}
         <div className="mt-4">
           <h3 className="font-semibold mb-1">Worker Pools</h3>
           <WorkerPools workers={stats.workers} />
         </div>
+
+        {blockedKeys.length > 0 && (
+          <div className="mt-6">
+            <BlockedKeysTable blockedKeys={blockedKeys} />
+          </div>
+        )}
       </div>
     </div>
   );
