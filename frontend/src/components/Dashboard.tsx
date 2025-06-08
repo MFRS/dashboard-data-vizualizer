@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import type { EndpointData } from "@shared/types/EndpointData";
 import {
@@ -19,9 +19,27 @@ const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
   const [selected, setSelected] = useState<EndpointData | null>(null);
 
-  if (!data) return <p className="p-4">Waiting for data...</p>;
+  // Rehydrate selected region from localStorage on data load
+  useEffect(() => {
+    if (data) {
+      const stored = localStorage.getItem("selectedRegion");
+      if (stored) {
+        const found = data.find((r) => r.region === stored);
+        if (found) setSelected(found);
+      }
+    }
+  }, [data]);
 
-  console.log("Currently selected:", selected?.region);
+  // Persist selected region to localStorage
+  useEffect(() => {
+    if (selected) {
+      localStorage.setItem("selectedRegion", selected.region);
+    } else {
+      localStorage.removeItem("selectedRegion");
+    }
+  }, [selected]);
+
+  if (!data) return <p className="p-4">Waiting for data...</p>;
 
   return (
     <div className="p-6 space-y-6">
