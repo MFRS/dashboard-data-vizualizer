@@ -8,6 +8,8 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  BarChart,
+  Bar,
 } from "recharts";
 import RegionModal from "./RegionModal";
 
@@ -19,27 +21,27 @@ const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
   const [selected, setSelected] = useState<EndpointData | null>(null);
 
-  // Rehydrate selected region from localStorage on data load
   useEffect(() => {
     if (data) {
       const stored = localStorage.getItem("selectedRegion");
-      if (stored) {
-        const found = data.find((r) => r.region === stored);
-        if (found) setSelected(found);
-      }
+      const found = data.find((r) => r.region === stored);
+      if (found) setSelected(found);
     }
   }, [data]);
 
-  // Persist selected region to localStorage
   useEffect(() => {
-    if (selected) {
-      localStorage.setItem("selectedRegion", selected.region);
-    } else {
-      localStorage.removeItem("selectedRegion");
-    }
+    if (selected) localStorage.setItem("selectedRegion", selected.region);
+    else localStorage.removeItem("selectedRegion");
   }, [selected]);
 
   if (!data) return <p className="p-4">Waiting for data...</p>;
+
+  const avgCpu =
+    data.reduce((sum, r) => sum + r.stats.server.cpu_load, 0) / data.length;
+  const totalConns = data.reduce(
+    (sum, r) => sum + r.stats.server.active_connections,
+    0
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -48,6 +50,40 @@ const Dashboard: React.FC = () => {
         WebSocket Status: <strong>{status}</strong>
       </div>
 
+      {/* Global Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg p-4 shadow">
+          <p className="font-medium mb-1">Average CPU Load</p>
+          <p className="text-2xl font-bold text-blue-600 mb-2">
+            {(avgCpu * 100).toFixed(1)}%
+          </p>
+          <ResponsiveContainer width="100%" height={60}>
+            <BarChart data={[{ name: "Avg CPU", value: avgCpu * 100 }]}>
+              <XAxis dataKey="name" hide />
+              <YAxis domain={[0, 100]} hide />
+              <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+              <Bar dataKey="value" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="bg-white rounded-lg p-4 shadow">
+          <p className="font-medium mb-1">Total Active Connections</p>
+          <p className="text-2xl font-bold text-orange-600 mb-2">
+            {totalConns}
+          </p>
+          <ResponsiveContainer width="100%" height={60}>
+            <BarChart data={[{ name: "Conns", value: totalConns }]}>
+              <XAxis dataKey="name" hide />
+              <YAxis hide />
+              <Tooltip formatter={(v: number) => `${v}`} />
+              <Bar dataKey="value" fill="#f97316" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Regions */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...data]
           .sort((a, b) => a.region.localeCompare(b.region))
@@ -58,10 +94,7 @@ const Dashboard: React.FC = () => {
             return (
               <div
                 key={region.region}
-                onClick={() => {
-                  console.log("Clicked region:", region.region);
-                  setSelected(region);
-                }}
+                onClick={() => setSelected(region)}
                 className={`bg-white p-4 rounded-lg shadow border-2 cursor-pointer hover:shadow-lg transition ${
                   region.status === "online"
                     ? "border-green-300"
@@ -87,9 +120,9 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm font-medium">CPU Trend (%)</p>
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart
-                        data={histRegion.cpuHistory.map((val, idx) => ({
-                          time: idx,
-                          cpu: val * 100,
+                        data={histRegion.cpuHistory.map((v, i) => ({
+                          time: i,
+                          cpu: v * 100,
                         }))}
                       >
                         <XAxis dataKey="time" hide />
@@ -110,11 +143,11 @@ const Dashboard: React.FC = () => {
                 )}
 
                 <div className="text-sm space-y-1 mb-2">
-                  <p>Current CPU: {(stats.cpu_load * 100).toFixed(1)}%</p>
+                  <p>CPU: {(stats.cpu_load * 100).toFixed(1)}%</p>
                   <p>Load: {region.load ?? "N/A"}</p>
                   <p>Connections: {stats.active_connections}</p>
                   <p>Sessions: {region.stats.session ?? "N/A"}</p>
-                  <p>Servers: {region.stats.servers_count}</p>
+                  <p>Servers: {stats.servers_count}</p>
                   <p>Wait: {stats.wait_time}ms</p>
                   <p>Timers: {stats.timers}</p>
                 </div>
