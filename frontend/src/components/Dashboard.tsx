@@ -26,6 +26,7 @@ const CONN_ALERT_THRESHOLD = 10000;
 const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
   const [selected, setSelected] = useState<EndpointData | null>(null);
+  const [history, setHistory] = useState<EndpointData[][]>([]);
   const alerted = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -44,7 +45,24 @@ const Dashboard: React.FC = () => {
     }
   }, [selected]);
 
-  // Trigger alerts when thresholds are exceeded
+  useEffect(() => {
+    if (data) {
+      setHistory((prev) => [...prev.slice(-299), data]);
+    }
+  }, [data]);
+
+  const downloadJSON = () => {
+    const blob = new Blob([JSON.stringify(history, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `stats-history-${new Date().toISOString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     if (data) {
       data.forEach((r) => {
@@ -85,12 +103,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <h2 className="text-2xl font-bold">DevOps Dashboard</h2>
+      <h2 className="text-2xl font-bold flex justify-between items-center">
+        DevOps Dashboard
+        <button
+          onClick={downloadJSON}
+          className="ml-4 px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          ⬇ Download JSON
+        </button>
+      </h2>
+
       <div className="text-gray-600 mb-4">
         WebSocket Status: <strong>{status}</strong>
       </div>
 
-      {/* Global Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg p-4 shadow">
           <p className="font-medium mb-1">Average CPU Load</p>
@@ -106,6 +132,7 @@ const Dashboard: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+
         <div className="bg-white rounded-lg p-4 shadow">
           <p className="font-medium mb-1">Total Active Connections</p>
           <p className="text-2xl font-bold text-orange-600 mb-2">
@@ -122,7 +149,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Region Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...data]
           .sort((a, b) => a.region.localeCompare(b.region))
