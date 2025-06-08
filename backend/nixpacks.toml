@@ -5,7 +5,7 @@ nixPkgs = ["nodejs", "yarn"]
 cmds = ["cd backend && yarn install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["cd backend && yarn build"]
+cmd = "npm install && npm run build"
 
 [start]
 cmd = "node dist/server.js"
