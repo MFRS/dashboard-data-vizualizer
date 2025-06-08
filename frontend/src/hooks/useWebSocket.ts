@@ -1,5 +1,3 @@
-// frontend/src/hooks/useWebSocket.ts
-
 import { useEffect, useRef, useState } from "react";
 import type { EndpointData } from "@shared/types/EndpointData";
 
@@ -17,39 +15,31 @@ export function useWebSocket(url: string) {
 
   useEffect(() => {
     let socket: WebSocket;
-    let reconnectTimeout: NodeJS.Timeout;
+    let reconnect: number;
 
     const connect = () => {
       socket = new WebSocket(url);
       socketRef.current = socket;
 
       socket.onopen = () => setStatus("connected");
-
-      socket.onmessage = (event) => {
+      socket.onmessage = (e) => {
         try {
-          const incoming = JSON.parse(event.data) as EndpointData[];
-
+          const incoming = JSON.parse(e.data) as EndpointData[];
           const enriched = incoming.map((region) => {
             const prev = historyRef.current[region.region] ?? [];
-            const updated = [...prev.slice(-29), region.stats.server.cpu_load];
-
-            historyRef.current[region.region] = updated;
-
-            return {
-              ...region,
-              cpuHistory: updated,
-            };
+            const patch = [...prev.slice(-29), region.stats.server.cpu_load];
+            historyRef.current[region.region] = patch;
+            return { ...region, cpuHistory: patch };
           });
-
           setData(enriched);
-        } catch (error) {
-          console.error("Failed to parse WebSocket message:", error);
+        } catch (err) {
+          console.error("Failed to parse message:", err);
         }
       };
 
       socket.onclose = () => {
         setStatus("disconnected");
-        reconnectTimeout = setTimeout(connect, 5000);
+        reconnect = window.setTimeout(connect, 5000);
       };
 
       socket.onerror = (err) => {
@@ -60,16 +50,9 @@ export function useWebSocket(url: string) {
 
     connect();
 
-    const handleBeforeUnload = () => {
-      socket.close();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
-      clearTimeout(reconnectTimeout);
+      window.clearTimeout(reconnect);
       socket.close();
-      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [url]);
 

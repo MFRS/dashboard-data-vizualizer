@@ -1,47 +1,37 @@
+// backend/src/server.ts
 import express, { Request, Response } from "express";
 import { createServer } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-
+import { WebSocketServer } from "ws";
 import { BroadcastService } from "./services/BroadcastService";
 
+const PORT = Number(process.env.PORT) || 3000;
 const app = express();
+
 app.get("/health", (_: Request, res: Response) => {
   res.send("Server is up");
 });
 
 const server = createServer(app);
 
-server.listen(3000, () => {
-  console.log(" Server is listening on port 3000");
+server.listen(PORT, () => {
+  console.log(`🚀 Server is listening on port ${PORT}`);
 });
 
-// Attach WebSocket to the same HTTP server
 const wss = new WebSocketServer({ server });
-
-// Create a broadcaster
 const broadcaster = new BroadcastService(wss);
 
-// Log incoming WebSocket connections
+// Send latest state to new clients and log events
 wss.on("connection", (ws) => {
   console.log("🔌 Client connected");
+  ws.send(JSON.stringify(broadcaster.getLatestData()));
 
-  ws.on("message", (message) => {
-    console.log(` Received message: ${message}`);
-  });
-
-  ws.on("close", () => {
-    console.log(" Client disconnected");
-  });
-
-  ws.on("error", (error) => {
-    console.error(` WebSocket error:`, error);
-  });
+  ws.on("close", () => console.log("🔌 Client disconnected"));
+  ws.on("error", (error) => console.error("🛑 WebSocket error:", error));
 });
 
-// Start broadcasting if not in test mode
+// Kick off a single broadcast loop when the server starts
 if (process.env.NODE_ENV !== "test") {
   broadcaster.start();
 }
 
-// Export for tests
 export { app, server, broadcaster };

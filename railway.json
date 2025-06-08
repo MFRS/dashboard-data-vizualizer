@@ -1,0 +1,14 @@
+{
+    "build": {
+        "builder": "NIXPACKS",
+        "nixpacksConfigPath": "nixpacks.toml"
+    },
+    "deploy": {
+        "startCommand": "node dist/server.js"
+    },
+    "plugins": {
+        "node": {
+            "version": "18"
+        }
+    }
+}
