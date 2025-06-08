@@ -1,22 +1,25 @@
 import React from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
-import type { EndpointData } from "../types/EndpointData";
+import type { EndpointData } from "@shared/types/EndpointData";
 import {
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
+  LineChart,
+  Line,
   Tooltip,
+  XAxis,
   YAxis,
 } from "recharts";
 
-const Dashboard = () => {
-  const { data, status } = useWebSocket("ws://localhost:3000");
+interface HistoricalData extends EndpointData {
+  cpuHistory?: number[];
+}
 
-  if (!data) return <p className="p-4">Waiting for data...</p>;
+const Dashboard: React.FC = () => {
+  const { status, data } = useWebSocket("ws://localhost:3000");
 
-  const CPU_ALERT_THRESHOLD = 0.8;
-  const WAIT_ALERT_THRESHOLD = 500;
+  if (!data) {
+    return <p className="p-4">Waiting for data...</p>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -28,10 +31,10 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...data]
           .sort((a, b) => a.region.localeCompare(b.region))
-          .map((region: EndpointData) => {
+          .map((region) => {
+            const histRegion = region as HistoricalData;
             const stats = region.stats.server;
-            const cpuAlert = stats.cpu_load >= CPU_ALERT_THRESHOLD;
-            const waitAlert = stats.wait_time >= WAIT_ALERT_THRESHOLD;
+
             return (
               <div
                 key={region.region}
@@ -55,71 +58,43 @@ const Dashboard = () => {
                   Version: {region.version}
                 </p>
 
-                {/* Alert / Healthy badges */}
-                <div className="flex gap-2 mb-3">
-                  {cpuAlert ? (
-                    <span className="bg-red-200 text-red-800 px-2 rounded text-xs">
-                      High CPU
-                    </span>
-                  ) : (
-                    <span className="bg-green-200 text-green-800 px-2 rounded text-xs">
-                      CPU OK
-                    </span>
-                  )}
-
-                  {waitAlert ? (
-                    <span className="bg-red-200 text-red-800 px-2 rounded text-xs">
-                      High Wait
-                    </span>
-                  ) : (
-                    <span className="bg-green-200 text-green-800 px-2 rounded text-xs">
-                      Wait OK
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium">CPU Load</p>
+                {/* CPU sparkline */}
+                {histRegion.cpuHistory && histRegion.cpuHistory.length > 1 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium">CPU Trend (%)</p>
                     <ResponsiveContainer width="100%" height={50}>
-                      <BarChart
-                        data={[{ name: "CPU", load: stats.cpu_load * 100 }]}
+                      <LineChart
+                        data={histRegion.cpuHistory.map((val, idx) => ({
+                          time: idx,
+                          cpu: val * 100,
+                        }))}
                       >
-                        <XAxis dataKey="name" hide />
-                        <YAxis hide domain={[0, 100]} />
+                        <XAxis dataKey="time" hide />
+                        <YAxis domain={[0, 100]} hide />
                         <Tooltip
-                          formatter={(value: number) => `${value.toFixed(1)}%`}
+                          formatter={(v: number) => `${v.toFixed(1)}%`}
                         />
-                        <Bar
-                          dataKey="load"
-                          fill={cpuAlert ? "#dc2626" : "#10b981"} // red if high, green if ok
+                        <Line
+                          type="monotone"
+                          dataKey="cpu"
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          dot={false}
                         />
-                      </BarChart>
+                      </LineChart>
                     </ResponsiveContainer>
                   </div>
+                )}
 
-                  <div>
-                    <p className="text-sm font-medium">Active Connections</p>
-                    <ResponsiveContainer width="100%" height={50}>
-                      <BarChart
-                        data={[
-                          { name: "Conns", value: stats.active_connections },
-                        ]}
-                      >
-                        <XAxis dataKey="name" hide />
-                        <YAxis hide />
-                        <Tooltip formatter={(value: number) => `${value}`} />
-                        <Bar dataKey="value" fill="#f97316" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="text-sm space-y-1">
-                    <p>Servers: {region.stats.servers_count}</p>
-                    <p>Sessions: {region.stats.session}</p>
-                    <p>Wait Time: {stats.wait_time}ms</p>
-                    <p>Timers: {stats.timers}</p>
-                  </div>
+                {/* Stats and other info */}
+                <div className="text-sm space-y-1 mb-2">
+                  <p>Current CPU: {(stats.cpu_load * 100).toFixed(1)}%</p>
+                  <p>Load: {region.load ?? "N/A"}</p>
+                  <p>Connections: {stats.active_connections}</p>
+                  <p>Sessions: {region.stats.session ?? "N/A"}</p>
+                  <p>Servers: {region.stats.servers_count}</p>
+                  <p>Wait: {stats.wait_time}ms</p>
+                  <p>Timers: {stats.timers}</p>
                 </div>
               </div>
             );
