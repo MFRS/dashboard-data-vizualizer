@@ -55,16 +55,25 @@ const Dashboard = () => {
                   Version: {region.version}
                 </p>
 
-                {/* Alert badges */}
+                {/* Alert / Healthy badges */}
                 <div className="flex gap-2 mb-3">
-                  {cpuAlert && (
-                    <span className="bg-yellow-200 text-yellow-800 px-2 rounded text-xs">
+                  {cpuAlert ? (
+                    <span className="bg-red-200 text-red-800 px-2 rounded text-xs">
                       High CPU
                     </span>
+                  ) : (
+                    <span className="bg-green-200 text-green-800 px-2 rounded text-xs">
+                      CPU OK
+                    </span>
                   )}
-                  {waitAlert && (
-                    <span className="bg-yellow-200 text-yellow-800 px-2 rounded text-xs">
+
+                  {waitAlert ? (
+                    <span className="bg-red-200 text-red-800 px-2 rounded text-xs">
                       High Wait
+                    </span>
+                  ) : (
+                    <span className="bg-green-200 text-green-800 px-2 rounded text-xs">
+                      Wait OK
                     </span>
                   )}
                 </div>
@@ -83,7 +92,7 @@ const Dashboard = () => {
                         />
                         <Bar
                           dataKey="load"
-                          fill={cpuAlert ? "#d97706" : "#3b82f6"}
+                          fill={cpuAlert ? "#dc2626" : "#10b981"} // red if high, green if ok
                         />
                       </BarChart>
                     </ResponsiveContainer>
