@@ -26,7 +26,15 @@ const CONN_ALERT_THRESHOLD = 10000;
 const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
   const [selected, setSelected] = useState<EndpointData | null>(null);
-  const [history, setHistory] = useState<EndpointData[][]>([]);
+  const [history, setHistory] = useState<EndpointData[][]>(() => {
+    try {
+      const raw = localStorage.getItem("statsHistory");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const alerted = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -46,9 +54,11 @@ const Dashboard: React.FC = () => {
   }, [selected]);
 
   useEffect(() => {
-    if (data) {
-      setHistory((prev) => [...prev.slice(-299), data]);
-    }
+    setHistory((prev) => {
+      const updated = [...prev.slice(-299), data];
+      localStorage.setItem("statsHistory", JSON.stringify(updated));
+      return updated;
+    });
   }, [data]);
 
   const downloadJSON = () => {
