@@ -1,9 +1,6 @@
+import { HistoricalData } from "@/types/type";
+import { EndpointData } from "@shared/EndpointData";
 import { useEffect, useRef, useState } from "react";
-import type { EndpointData } from "@shared/types/EndpointData";
-
-interface HistoricalData extends EndpointData {
-  cpuHistory?: number[];
-}
 
 export function useWebSocket(url: string) {
   const socketRef = useRef<WebSocket | null>(null);

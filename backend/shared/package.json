@@ -1,0 +1,7 @@
+{
+  "name": "dashboard-shared-types",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts"
+}

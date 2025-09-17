@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import type { EndpointData } from "@shared/types/EndpointData";
 import WorkerPools from "./WorkerPools";
 import BlockedKeysTable from "./BlockedKeysTable"; // 👈 NEW import
 import {
@@ -12,9 +11,10 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
+import { HistoricalData } from "@/types/type";
 
 interface RegionModalProps {
-  region: EndpointData;
+  region: HistoricalData & { roles?: string[] };
   onClose: () => void;
 }
 
@@ -64,7 +64,7 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
         </button>
         <h2 className="text-xl font-bold mb-2">{region.region} Details</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Version: {region.version} | Roles: {region.roles?.join(", ") ?? "—"}
+          Version: {region.version} | Roles: {region?.roles?.join(", ") ?? "—"}
         </p>
 
         <div className="mt-4">
@@ -74,7 +74,7 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
           <ResponsiveContainer width="100%" height={100}>
             <LineChart
               data={
-                (region as any).cpuHistory?.map((v: number, i: number) => ({
+                region.cpuHistory?.map((v: number, i: number) => ({
                   time: i,
                   cpu: v * 100,
                 })) ?? []

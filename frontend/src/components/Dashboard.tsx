@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
-import type { EndpointData } from "@shared/types/EndpointData";
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,17 +14,15 @@ import {
 } from "recharts";
 import RegionModal from "./RegionModal";
 import { toast } from "react-toastify";
-
-interface HistoricalData extends EndpointData {
-  cpuHistory?: number[];
-}
+import { HistoricalData } from "@/types/type";
+import { EndpointData } from "@shared/EndpointData";
 
 const CPU_ALERT_THRESHOLD = 0.85;
 const CONN_ALERT_THRESHOLD = 10000;
 
 const Dashboard: React.FC = () => {
   const { status, data } = useWebSocket("ws://localhost:3000");
-  const [selected, setSelected] = useState<EndpointData | null>(null);
+  const [selected, setSelected] = useState<HistoricalData | null>(null);
   const [history, setHistory] = useState<EndpointData[][]>(() => {
     try {
       const raw = localStorage.getItem("statsHistory");
@@ -54,11 +51,13 @@ const Dashboard: React.FC = () => {
   }, [selected]);
 
   useEffect(() => {
-    setHistory((prev) => {
-      const updated = [...prev.slice(-299), data];
-      localStorage.setItem("statsHistory", JSON.stringify(updated));
-      return updated;
-    });
+    if (data) {
+      setHistory((prev) => {
+        const updated = [...prev.slice(-299), data];
+        localStorage.setItem("statsHistory", JSON.stringify(updated));
+        return updated;
+      });
+    }
   }, [data]);
 
   const downloadJSON = () => {
@@ -245,7 +244,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm text-gray-500 mb-2">
                   Version: {region.version}
                 </p>
-                {histRegion.cpuHistory?.length > 1 && (
+                {(histRegion?.cpuHistory?.length || 0) > 1 && (
                   <div className="mb-4">
                     <div className="flex justify-between text-sm font-medium">
                       <span>CPU Trend (%)</span>
@@ -253,7 +252,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <ResponsiveContainer width="100%" height={50}>
                       <LineChart
-                        data={histRegion.cpuHistory.map((v, i) => ({
+                        data={histRegion?.cpuHistory?.map((v, i) => ({
                           time: i,
                           cpu: v * 100,
                         }))}
@@ -289,7 +288,7 @@ const Dashboard: React.FC = () => {
                   <p>Load: {region.load ?? "N/A"}</p>
                   <p>Connections: {stats.active_connections}</p>
                   <p>Sessions: {region.stats.session ?? "N/A"}</p>
-                  <p>Servers: {stats.servers_count}</p>
+                  <p>Servers: {region.stats.servers_count}</p>
                   <p>Wait: {stats.wait_time}ms</p>
                   <p>Timers: {stats.timers}</p>
                 </div>
