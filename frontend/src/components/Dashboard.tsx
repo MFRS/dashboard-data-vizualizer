@@ -23,7 +23,9 @@ const LOCALE_S_STATS_KEY = "statsHistory";
 const LOCALE_S_REGION_KEY = "selectedRegion";
 
 const Dashboard: React.FC = () => {
-  const { status, data } = useWebSocket("ws://localhost:3000"); //.env
+  const { status, data } = useWebSocket(
+    "wss://dashboard-data-vizualizer-be.onrender.com"
+  ); //.env
   const [selected, setSelected] = useState<HistoricalData | null>(null);
   const [history, setHistory] = useState<EndpointData[][]>(() => {
     try {
