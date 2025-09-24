@@ -14,7 +14,7 @@ import {
 import { HistoricalData } from "@/types/type";
 
 interface RegionModalProps {
-  region: HistoricalData;
+  region: HistoricalData & { roles?: string[] };
   onClose: () => void;
 }
 

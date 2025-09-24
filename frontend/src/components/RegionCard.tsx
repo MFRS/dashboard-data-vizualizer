@@ -4,7 +4,9 @@ import ServiceHealth from "./ServiceHealth";
 import ServerStats from "./ServerStats";
 import WorkerPools from "./WorkerPools";
 
-const RegionCard: React.FC<{ data: EndpointData }> = ({ data }) => {
+const RegionCard: React.FC<{ data: EndpointData & { roles?: string[] } }> = ({
+  data,
+}) => {
   const online = data.status === "online";
   return (
     <div
