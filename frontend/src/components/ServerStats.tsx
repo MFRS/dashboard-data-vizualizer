@@ -1,5 +1,5 @@
 import React from "react";
-import type { EndpointData } from "../types/EndpointData";
+import type { EndpointData } from "@shared/EndpointData";
 
 const ServerStats: React.FC<{ stats: EndpointData["stats"] }> = ({ stats }) => {
   const s = stats.server;

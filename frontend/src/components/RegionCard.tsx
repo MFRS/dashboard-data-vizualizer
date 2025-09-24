@@ -1,5 +1,5 @@
 import React from "react";
-import type { EndpointData } from "../types/EndpointData";
+import type { EndpointData } from "@shared/EndpointData";
 import ServiceHealth from "./ServiceHealth";
 import ServerStats from "./ServerStats";
 import WorkerPools from "./WorkerPools";
@@ -23,7 +23,7 @@ const RegionCard: React.FC<{ data: EndpointData }> = ({ data }) => {
         </span>
       </div>
       <p className="text-xs text-gray-500">
-        v{data.version} · Roles: {data.roles.join(", ")}
+        v{data.version} · Roles: {data.roles?.join(", ") ?? "-"}
       </p>
       <ServiceHealth services={data.services} />
       <ServerStats stats={data.stats} />

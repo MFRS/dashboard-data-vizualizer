@@ -1,5 +1,5 @@
 import React from "react";
-import type { EndpointData } from "../types/EndpointData";
+import type { EndpointData } from "@shared/EndpointData";
 
 const ServiceHealth: React.FC<{ services: EndpointData["services"] }> = ({
   services,

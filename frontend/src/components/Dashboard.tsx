@@ -19,13 +19,15 @@ import { EndpointData } from "@shared/EndpointData";
 
 const CPU_ALERT_THRESHOLD = 0.85;
 const CONN_ALERT_THRESHOLD = 10000;
+const LOCALE_S_STATS_KEY = "statsHistory";
+const LOCALE_S_REGION_KEY = "selectedRegion";
 
 const Dashboard: React.FC = () => {
-  const { status, data } = useWebSocket("ws://localhost:3000");
+  const { status, data } = useWebSocket("ws://localhost:3000"); //.env
   const [selected, setSelected] = useState<HistoricalData | null>(null);
   const [history, setHistory] = useState<EndpointData[][]>(() => {
     try {
-      const raw = localStorage.getItem("statsHistory");
+      const raw = localStorage.getItem(LOCALE_S_STATS_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -36,7 +38,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (data) {
-      const stored = localStorage.getItem("selectedRegion");
+      const stored = localStorage.getItem(LOCALE_S_REGION_KEY);
       const found = data.find((r) => r.region === stored);
       if (found) setSelected(found);
     }
@@ -44,9 +46,9 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (selected) {
-      localStorage.setItem("selectedRegion", selected.region);
+      localStorage.setItem(LOCALE_S_REGION_KEY, selected.region);
     } else {
-      localStorage.removeItem("selectedRegion");
+      localStorage.removeItem(LOCALE_S_REGION_KEY);
     }
   }, [selected]);
 
@@ -54,7 +56,7 @@ const Dashboard: React.FC = () => {
     if (data) {
       setHistory((prev) => {
         const updated = [...prev.slice(-299), data];
-        localStorage.setItem("statsHistory", JSON.stringify(updated));
+        localStorage.setItem(LOCALE_S_STATS_KEY, JSON.stringify(updated));
         return updated;
       });
     }

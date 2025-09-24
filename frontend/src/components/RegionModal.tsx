@@ -14,7 +14,7 @@ import {
 import { HistoricalData } from "@/types/type";
 
 interface RegionModalProps {
-  region: HistoricalData & { roles?: string[] };
+  region: HistoricalData;
   onClose: () => void;
 }
 
@@ -40,7 +40,7 @@ const RegionModal: React.FC<RegionModalProps> = ({ region, onClose }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [onClose]);
-
+  //workers = [['_',{recently_blocked_keys:[['key',1,'25_']]}],['_']]
   const blockedKeys = stats.workers
     .flatMap(([, w]) => w.recently_blocked_keys)
     .map(([key, count, time]) => ({

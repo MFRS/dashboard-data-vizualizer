@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { EndpointData } from "../types/EndpointData";
+import type { EndpointData } from "@shared/EndpointData";
 
 type SortConfig = { key: "count" | "time"; direction: "asc" | "desc" };
 
@@ -28,7 +28,7 @@ const WorkerPools: React.FC<{
 
   const filteredWorkers = workers.filter(([name, w]) => {
     const matchesName = name.toLowerCase().includes(search.toLowerCase());
-    const matchesKey = w.recently_blocked_keys.some(([k]) =>
+    const matchesKey = w.recently_blocked_keys.some(([k]: [string]) =>
       k.toLowerCase().includes(search.toLowerCase())
     );
     return matchesName || matchesKey;
